@@ -1,0 +1,562 @@
+{
+    "name": "[[.DashboardTitle]]",
+    "description": null,
+    "permissions": "PUBLIC_READ_WRITE",
+    "pages": [
+        [[range $page := .BillboardData]]
+        {
+            "name": "[[$page.Title]]",
+            "description": null,
+            "widgets":
+            [
+                [[range $row := $page.Rows]]
+                [[range $section := $row.Sections]]
+                [[range $item := $section.Items]]
+                [[/*section title*/]]
+                [[if eq $item.Type "section_title"]]
+                {
+                    "title": "",
+                    "layout": {
+                        "column": [[$item.Column]],
+                        "row": [[$item.Row]],
+                        "width": [[$item.Width]],
+                        "height": [[$item.Height]]
+                    },
+                    "linkedEntityGuids": null,
+                    "visualization": {
+                        "id": "viz.markdown"
+                    },
+                    "rawConfiguration": {
+                        "text": "#### [[$section.Title]]"
+                    }
+                }
+                [[end]]
+                [[/*metrics*/]]
+                [[if eq $item.Type "metric"]]
+                {
+                    "title": "[[$item.Metric.MetricTitle]]",
+                    "layout": {
+                        "column": [[$item.Column]],
+                        "row": [[$item.Row]],
+                        "width": [[$item.Width]],
+                        "height": [[$item.Height]]
+                    },
+                    "linkedEntityGuids": null,
+                    "visualization": {
+                        "id": "viz.billboard"
+                    },
+                    "rawConfiguration": {
+                        "dataFormatters": [],
+                        "facet": {
+                            "showOtherSeries": false
+                        },
+                        "nrqlQueries": [
+                            {
+                                "accountIds": [
+                                    3044733
+                                ],
+                                "query": "SELECT percentage(sum([[$item.Metric.Attribute.HitCount]]), WHERE [[$item.Metric.StatusField]] = 'success') as '[[$item.Metric.MetricTitle]]' FROM Metric WHERE [[$item.Metric.Filter.FilterString]][[$item.Metric.ErrorFilter.FilterString]]environment in ({{environment}}) and (rate_limit_exceeded is null or rate_limit_exceeded in ('false', {{is_include_exceeded_rate_traffic}})) and error_type not in ({{exclude_error_type}})"
+                            }
+                        ],
+                        "platformOptions": {
+                            "ignoreTimeRange": false
+                        },
+                        "thresholds": [
+                            {
+                                "alertSeverity": "WARNING",
+                                "value": 0.995
+                            },
+                            {
+                                "alertSeverity": "CRITICAL",
+                                "value": 0.99
+                            }
+                        ]
+                    }
+                }
+                [[end]]
+                [[if eq $item.Type "space"]]
+                [[/*space*/]]
+                {
+                    "title": "",
+                    "layout": {
+                        "column": [[$item.Column]],
+                        "row": [[$item.Row]],
+                        "width": [[$item.Width]],
+                        "height": [[$item.Height]]
+                    },
+                    "linkedEntityGuids": null,
+                    "visualization": {
+                        "id": "viz.markdown"
+                    },
+                    "rawConfiguration": {
+                        "text": " "
+                    }
+                }
+                [[end]]
+                [[if eq $item.IsLast false]]
+                ,
+                [[end]]
+                [[end]]
+                [[end]]
+                [[end]]
+            ]
+        },
+        [[end]]
+        [[$totalPage := .TotalPage]]
+        [[range $idxPage, $page := .DashboardBuilderData]]
+        {
+            "name": "[[$page.PageTitle]]",
+            "description": null,
+            "widgets": [
+                [[$totalMetrics := $page.TotalMetrics]]
+                [[range $idxMetric, $metric := $page.Metrics]]
+                {
+                    "title": "[[$metric.MetricTitle]] - Traffic Hit Rate",
+                    "layout": {
+                        "column": 1,
+                        "row": [[getRows $idxMetric 1]],
+                        "width": 6,
+                        "height": 2
+                    },
+                    "linkedEntityGuids": null,
+                    "visualization": {
+                        "id": "viz.line"
+                    },
+                    "rawConfiguration": {
+                        "facet": {
+                            "showOtherSeries": false
+                        },
+                        "legend": {
+                            "enabled": true
+                        },
+                        "nrqlQueries": [
+                            {
+                                "accountIds": [
+                                    3044733
+                                ],
+                                "query": "SELECT rate(sum([[$metric.Attribute.HitCount]]), 1 second) AS 'Hit Rate' FROM Metric WHERE [[$metric.Filter.FilterString]] environment in ({{environment}}) and (rate_limit_exceeded is null or rate_limit_exceeded in ('false', {{is_include_exceeded_rate_traffic}})) TIMESERIES auto COMPARE WITH 1 week ago"
+                            }
+                        ],
+                        "platformOptions": {
+                            "ignoreTimeRange": false
+                        },
+                        "yAxisLeft": {
+                            "zero": false
+                        }
+                    }
+                },
+                {
+                    "title": "[[$metric.MetricTitle]] - Average Latency",
+                    "layout": {
+                        "column": 7,
+                        "row": [[getRows $idxMetric 1]],
+                        "width": 6,
+                        "height": 2
+                    },
+                    "linkedEntityGuids": null,
+                    "visualization": {
+                        "id": "viz.line"
+                    },
+                    "rawConfiguration": {
+                        "facet": {
+                            "showOtherSeries": false
+                        },
+                        "legend": {
+                            "enabled": true
+                        },
+                        "nrqlQueries": [
+                            {
+                                "accountIds": [
+                                    3044733
+                                ],
+                                "query": "SELECT average([[$metric.Attribute.Latency]]) AS 'Average Latency (ms)' FROM Metric WHERE [[$metric.Filter.FilterString]]environment in ({{environment}}) and (rate_limit_exceeded is null or rate_limit_exceeded in ('false', {{is_include_exceeded_rate_traffic}})) TIMESERIES auto COMPARE WITH 1 week ago"
+                            }
+                        ],
+                        "platformOptions": {
+                            "ignoreTimeRange": false
+                        },
+                        "yAxisLeft": {
+                            "zero": false
+                        }
+                    }
+                },
+                {
+                    "title": "[[$metric.MetricTitle]] - Error Count",
+                    "layout": {
+                        "column": 13,
+                        "row": [[getRows $idxMetric 1]],
+                        "width": 7,
+                        "height": 3
+                    },
+                    "linkedEntityGuids": null,
+                    "visualization": {
+                        "id": "viz.stacked-bar"
+                    },
+                    "rawConfiguration": {
+                        "facet": {
+                            "showOtherSeries": false
+                        },
+                        "legend": {
+                            "enabled": true
+                        },
+                        "nrqlQueries": [
+                            {
+                                "accountIds": [
+                                    3044733
+                                ],
+                                "query": "SELECT sum([[$metric.Attribute.HitCount]]) FROM Metric WHERE [[$metric.Filter.FilterString]][[$metric.ErrorFilter.FilterString]]environment in ({{environment}}) and (rate_limit_exceeded is null or rate_limit_exceeded in ('false', {{is_include_exceeded_rate_traffic}})) and error_type not in ({{exclude_error_type}}) and [[$metric.StatusField]] != 'success' facet error_type, error_pic, error TIMESERIES limit 100"
+                            }
+                        ],
+                        "platformOptions": {
+                            "ignoreTimeRange": false
+                        }
+                    }
+                },
+                {
+                    "title": "[[$metric.MetricTitle]] - Error Chart",
+                    "layout": {
+                        "column": 20,
+                        "row": [[getRows $idxMetric 1]],
+                        "width": 5,
+                        "height": 3
+                    },
+                    "linkedEntityGuids": null,
+                    "visualization": {
+                        "id": "viz.pie"
+                    },
+                    "rawConfiguration": {
+                        "facet": {
+                            "showOtherSeries": true
+                        },
+                        "legend": {
+                            "enabled": true
+                        },
+                        "nrqlQueries": [
+                            {
+                                "accountIds": [
+                                    3044733
+                                ],
+                                "query": "SELECT sum([[$metric.Attribute.HitCount]]) FROM Metric WHERE [[$metric.Filter.FilterString]][[$metric.ErrorFilter.FilterString]]environment in ({{environment}}) and (rate_limit_exceeded is null or rate_limit_exceeded in ('false', {{is_include_exceeded_rate_traffic}})) and error_type not in ({{exclude_error_type}}) and [[$metric.StatusField]] != 'success' facet error_type, error_pic, error"
+                            }
+                        ],
+                        "platformOptions": {
+                            "ignoreTimeRange": false
+                        }
+                    }
+                },
+                {
+                    "title": "[[$metric.MetricTitle]] - Success Rate",
+                    "layout": {
+                        "column": 1,
+                        "row": [[getRows $idxMetric 3]],
+                        "width": 2,
+                        "height": 1
+                    },
+                    "linkedEntityGuids": null,
+                    "visualization": {
+                        "id": "viz.billboard"
+                    },
+                    "rawConfiguration": {
+                        "facet": {
+                            "showOtherSeries": false
+                        },
+                        "nrqlQueries": [
+                            {
+                                "accountIds": [
+                                    3044733
+                                ],
+                                "query": "SELECT percentage(sum([[$metric.Attribute.HitCount]]), WHERE [[$metric.StatusField]] = 'success') as 'Success Rate' FROM Metric WHERE [[$metric.Filter.FilterString]][[$metric.ErrorFilter.FilterString]]environment in ({{environment}}) and (rate_limit_exceeded is null or rate_limit_exceeded in ('false', {{is_include_exceeded_rate_traffic}})) and error_type not in ({{exclude_error_type}})"
+                            }
+                        ],
+                        "platformOptions": {
+                            "ignoreTimeRange": false
+                        },
+                        "thresholds": [
+                            {
+                                "alertSeverity": "WARNING",
+                                "value": 0.99
+                            },
+                            {
+                                "alertSeverity": "CRITICAL",
+                                "value": 0.95
+                            }
+                        ]
+                    }
+                },
+                {
+                    "title": "[[$metric.MetricTitle]] - RPS",
+                    "layout": {
+                        "column": 3,
+                        "row": [[getRows $idxMetric 3]],
+                        "width": 2,
+                        "height": 1
+                    },
+                    "linkedEntityGuids": null,
+                    "visualization": {
+                        "id": "viz.billboard"
+                    },
+                    "rawConfiguration": {
+                        "facet": {
+                            "showOtherSeries": false
+                        },
+                        "nrqlQueries": [
+                            {
+                                "accountIds": [
+                                    3044733
+                                ],
+                                "query": "SELECT rate(sum([[$metric.Attribute.HitCount]]), 1 second) AS 'RPS' FROM Metric WHERE [[$metric.Filter.FilterString]]environment in ({{environment}}) and (rate_limit_exceeded is null or rate_limit_exceeded in ('false', {{is_include_exceeded_rate_traffic}}))"
+                            }
+                        ],
+                        "platformOptions": {
+                            "ignoreTimeRange": false
+                        }
+                    }
+                },
+                {
+                    "title": "[[$metric.MetricTitle]] - Total Hit Count",
+                    "layout": {
+                        "column": 5,
+                        "row": [[getRows $idxMetric 3]],
+                        "width": 2,
+                        "height": 1
+                    },
+                    "linkedEntityGuids": null,
+                    "visualization": {
+                        "id": "viz.billboard"
+                    },
+                    "rawConfiguration": {
+                        "facet": {
+                            "showOtherSeries": false
+                        },
+                        "nrqlQueries": [
+                            {
+                                "accountIds": [
+                                    3044733
+                                ],
+                                "query": "SELECT sum([[$metric.Attribute.HitCount]]) AS 'Total Hit Count' FROM Metric WHERE [[$metric.Filter.FilterString]]environment in ({{environment}}) and (rate_limit_exceeded is null or rate_limit_exceeded in ('false', {{is_include_exceeded_rate_traffic}}))"
+                            }
+                        ],
+                        "platformOptions": {
+                            "ignoreTimeRange": false
+                        }
+                    }
+                },
+                {
+                    "title": "[[$metric.MetricTitle]] - Average Latency",
+                    "layout": {
+                        "column": 7,
+                        "row": [[getRows $idxMetric 3]],
+                        "width": 2,
+                        "height": 1
+                    },
+                    "linkedEntityGuids": null,
+                    "visualization": {
+                        "id": "viz.billboard"
+                    },
+                    "rawConfiguration": {
+                        "facet": {
+                            "showOtherSeries": false
+                        },
+                        "nrqlQueries": [
+                            {
+                                "accountIds": [
+                                    3044733
+                                ],
+                                "query": "SELECT average([[$metric.Attribute.Latency]]) AS 'Average Latency (ms)' FROM Metric WHERE [[$metric.Filter.FilterString]]environment in ({{environment}}) and (rate_limit_exceeded is null or rate_limit_exceeded in ('false', {{is_include_exceeded_rate_traffic}}))"
+                            }
+                        ],
+                        "platformOptions": {
+                            "ignoreTimeRange": false
+                        },
+                        "thresholds": [
+                            {
+                                "alertSeverity": "WARNING",
+                                "value": 300
+                            },
+                            {
+                                "alertSeverity": "CRITICAL",
+                                "value": 500
+                            }
+                        ]
+                    }
+                },
+                {
+                    "title": "[[$metric.MetricTitle]] - Maximum Latency",
+                    "layout": {
+                        "column": 9,
+                        "row": [[getRows $idxMetric 3]],
+                        "width": 2,
+                        "height": 1
+                    },
+                    "linkedEntityGuids": null,
+                    "visualization": {
+                        "id": "viz.line"
+                    },
+                    "rawConfiguration": {
+                        "facet": {
+                            "showOtherSeries": false
+                        },
+                        "legend": {
+                            "enabled": true
+                        },
+                        "nrqlQueries": [
+                            {
+                                "accountIds": [
+                                    3044733
+                                ],
+                                "query": "SELECT max([[$metric.Attribute.Latency]]) AS 'Max Latency (ms)' FROM Metric WHERE [[$metric.Filter.FilterString]]environment in ({{environment}}) and (rate_limit_exceeded is null or rate_limit_exceeded in ('false', {{is_include_exceeded_rate_traffic}})) TIMESERIES auto compare with 1 week ago"
+                            }
+                        ],
+                        "platformOptions": {
+                            "ignoreTimeRange": false
+                        },
+                        "yAxisLeft": {
+                            "zero": false
+                        }
+                    }
+                },
+                {
+                    "title": "[[$metric.MetricTitle]] - Success Rate",
+                    "layout": {
+                        "column": 11,
+                        "row": [[getRows $idxMetric 3]],
+                        "width": 2,
+                        "height": 1
+                    },
+                    "linkedEntityGuids": null,
+                    "visualization": {
+                        "id": "viz.line"
+                    },
+                    "rawConfiguration": {
+                        "colors": {
+                            "seriesOverrides": [
+                                {
+                                    "color": "#e8a32c",
+                                    "seriesName": "Warning Threshold"
+                                },
+                                {
+                                    "color": "#b41818",
+                                    "seriesName": "Critical Threshold"
+                                },
+                                {
+                                    "color": "#32c34f",
+                                    "seriesName": "Success Rate"
+                                }
+                            ]
+                        },
+                        "facet": {
+                            "showOtherSeries": false
+                        },
+                        "legend": {
+                            "enabled": true
+                        },
+                        "nrqlQueries": [
+                            {
+                                "accountIds": [
+                                    3044733
+                                ],
+                                "query": "SELECT percentage(sum([[$metric.Attribute.HitCount]]), WHERE [[$metric.StatusField]] = 'success') as 'Success Rate', 0.99 as 'Warning Threshold', 0.95 as 'Critical Threshold' FROM Metric WHERE [[$metric.Filter.FilterString]][[$metric.ErrorFilter.FilterString]]environment in ({{environment}}) and (rate_limit_exceeded is null or rate_limit_exceeded in ('false', {{is_include_exceeded_rate_traffic}})) and error_type not in ({{exclude_error_type}}) timeseries auto"
+                            }
+                        ],
+                        "platformOptions": {
+                            "ignoreTimeRange": false
+                        },
+                        "yAxisLeft": {
+                            "zero": false
+                        }
+                    }
+                }
+                    [[if hasNext $idxMetric $totalMetrics]]
+                    ,
+                    [[end]]
+                [[end]]
+            ]
+        }
+            [[if hasNext $idxPage $totalPage]]
+            ,
+            [[end]]
+        [[end]]
+    ],
+    "variables": [
+        {
+            "name": "environment",
+            "items": [
+                {
+                    "title": null,
+                    "value": "production"
+                },
+                {
+                    "title": null,
+                    "value": "staging"
+                },
+                {
+                    "title": null,
+                    "value": "production-beta"
+                }
+            ],
+            "defaultValues": [
+                {
+                    "value": {
+                        "string": "production"
+                    }
+                },
+                {
+                    "value": {
+                        "string": "production-beta"
+                    }
+                }
+            ],
+            "nrqlQuery": null,
+            "title": "Environment",
+            "type": "ENUM",
+            "isMultiSelection": true,
+            "replacementStrategy": "STRING"
+        },
+        {
+            "name": "exclude_error_type",
+            "items": [
+                {
+                    "title": null,
+                    "value": "validation"
+                },
+                {
+                    "title": null,
+                    "value": "rate_limit"
+                }
+            ],
+            "defaultValues": [
+                {
+                    "value": {
+                        "string": "rate_limit"
+                    }
+                },
+                {
+                    "value": {
+                        "string": "validation"
+                    }
+                }
+            ],
+            "nrqlQuery": null,
+            "title": "Exclude Error Type",
+            "type": "ENUM",
+            "isMultiSelection": true,
+            "replacementStrategy": "STRING"
+        },
+        {
+            "name": "is_include_exceeded_rate_traffic",
+            "items": null,
+            "defaultValues": [
+                {
+                    "value": {
+                        "string": "false"
+                    }
+                }
+            ],
+            "nrqlQuery": null,
+            "title": "Include Exceeded Rate Traffic",
+            "type": "STRING",
+            "isMultiSelection": null,
+            "replacementStrategy": "STRING"
+        }
+    ]
+}
