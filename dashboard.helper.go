@@ -117,21 +117,6 @@ func (d DashboardBuilder) Build() (*bytes.Buffer, error) {
 		"getRows": func(idx, start int) int {
 			return start + (idx * 3)
 		},
-		"hasNext": func(curr, ttl int) bool {
-			return curr < ttl-1
-		},
-		"sectionLen": func(sections []DashboardBuilderDataPage) int {
-			return len(sections) - 1
-		},
-		"calc": func(idx, start, skip int) int {
-			return start + (idx * skip)
-		},
-		"substract": func(a, b int) int {
-			return a - b
-		},
-		"multiply": func(a, b int) int {
-			return a * b
-		},
 	}
 
 	tmpl, err := template.

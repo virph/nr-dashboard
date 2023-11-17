@@ -5,6 +5,8 @@ import (
 	"flag"
 	"fmt"
 	"log"
+
+	"gopkg.in/yaml.v3"
 )
 
 type Param struct {
@@ -22,7 +24,7 @@ func init() {
 }
 
 func main() {
-	sTemplate, err := readFile("template.json")
+	sTemplate, err := readFile("template.yaml")
 	if err != nil {
 		log.Fatalln("Err:", err)
 	}
@@ -44,11 +46,16 @@ func main() {
 		fmt.Println("Err:", err)
 	} else {
 		temp := make(map[string]interface{})
-		json.Unmarshal(buff.Bytes(), &temp)
+		if err := yaml.Unmarshal(buff.Bytes(), &temp); err != nil {
+			log.Fatalln("Err:", err)
+		}
+
 		jResult, jErr := json.Marshal(temp)
 		if jErr != nil {
 			log.Fatalln("Err:", err)
 		}
 		fmt.Println(string(jResult))
+
+		// fmt.Println(buff.String())
 	}
 }

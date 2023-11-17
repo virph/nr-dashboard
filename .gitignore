@@ -1,3 +1,5 @@
-nr-dashboard
-dashboard_result.json
+.vscode*
+/vendor
+dashboard_result.*
 data.csv
+nr-dashboard
